@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TENDRIL-1</title>
+<style>
+  :root{
+    --bg:#f6f8f4; --card:#ffffff; --ink:#1c2420; --muted:#5c6b60;
+    --vine:#2f7d4f; --vine2:#59b07a; --lotus:#e06a9c; --lotus2:#f3a9c8;
+    --warn-bg:#fff4f4; --warn-bd:#e0b4b4; --warn-ink:#8a2b2b;
+    --line:#e2e8df; --code:#f0f3ee;
+  }
+  :root:not([data-theme="light"]) @media (prefers-color-scheme:dark){}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --bg:#10140f; --card:#171c15; --ink:#e7eee6; --muted:#9bb0a0;
+    --vine:#6fce93; --vine2:#3f8f5f; --lotus:#f08cb7; --lotus2:#b85c86;
+    --warn-bg:#241314; --warn-bd:#5c2a2a; --warn-ink:#f0a6a6;
+    --line:#2a332666; --code:#1e241c;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#10140f; --card:#171c15; --ink:#e7eee6; --muted:#9bb0a0;
+    --vine:#6fce93; --vine2:#3f8f5f; --lotus:#f08cb7; --lotus2:#b85c86;
+    --warn-bg:#241314; --warn-bd:#5c2a2a; --warn-ink:#f0a6a6;
+    --line:#2a3326; --code:#1e241c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+  h1{font-size:2rem;margin:.2em 0 .1em;letter-spacing:-.01em}
+  h2{font-size:1.25rem;margin:1.8em 0 .5em;color:var(--vine)}
+  .sub{color:var(--muted);margin:.2em 0 1.2em}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px;margin:14px 0}
+  .warn{background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--warn-ink);
+    border-radius:12px;padding:12px 16px;margin:14px 0;font-weight:600}
+  label{display:block;font-size:.82rem;color:var(--muted);margin:10px 0 4px;
+    text-transform:uppercase;letter-spacing:.04em}
+  input,textarea{width:100%;background:var(--bg);color:var(--ink);
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:1rem;
+    font-family:inherit}
+  textarea{resize:vertical;min-height:62px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:160px}
+  button{background:var(--vine);color:#fff;border:0;border-radius:9px;
+    padding:10px 18px;font-size:.95rem;font-weight:600;cursor:pointer;margin:12px 6px 0 0}
+  button.ghost{background:transparent;color:var(--vine);border:1px solid var(--vine)}
+  button:active{transform:translateY(1px)}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;
+    padding:14px;overflow:auto;font-size:.86rem}
+  .out{background:var(--code);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;margin-top:8px;word-break:break-all;font-size:.9rem;min-height:1.4em}
+  canvas{display:block;margin:10px auto 0;max-width:100%;height:auto}
+  table{border-collapse:collapse;width:100%;font-size:.84rem}
+  td,th{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+  .ok{color:var(--vine);font-weight:700}
+  .bad{color:#c2456b;font-weight:700}
+  a{color:var(--lotus)}
+  .pill{display:inline-block;background:var(--code);border:1px solid var(--line);
+    border-radius:999px;padding:2px 10px;font-size:.78rem;color:var(--muted);margin-right:6px}
+  footer{margin-top:40px;color:var(--muted);font-size:.86rem;border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>🪷 TENDRIL-1</h1>
+  <p class="sub">An original, hand-made stream cipher — a climbing vine over a ring of nodes,
+  twisting by a rolling wheel. Built to be <b>attacked</b>.</p>
+
+  <div class="warn">⚠️ NOT SECURE. This is a learning toy / break-me challenge, not real
+  cryptography. Do not protect anything real with it. For that, use ML-KEM + AES-256-GCM.</div>
+
+  <div>
+    <span class="pill">ARX stream cipher</span>
+    <span class="pill">golden-angle walk</span>
+    <span class="pill">cycloid rotations</span>
+    <span class="pill">~40 lines</span>
+  </div>
+
+  <h2>Try it</h2>
+  <div class="card">
+    <div class="row">
+      <div><label>Key (secret)</label><input id="key" value="lotus-key"></div>
+      <div><label>Nonce (public, never reuse)</label><input id="nonce" value="pond-01"></div>
+    </div>
+    <label>Message</label>
+    <textarea id="msg">the lotus blooms at dawn</textarea>
+    <button onclick="doEnc()">Encrypt →</button>
+    <button class="ghost" onclick="doDec()">← Decrypt the hex below</button>
+    <label>Ciphertext (hex)</label>
+    <div class="out mono" id="ct"></div>
+    <label>Decrypted</label>
+    <div class="out" id="pt"></div>
+    <label>Keystream, drawn as a phyllotaxis lotus (each floret = one byte)</label>
+    <canvas id="lotus" width="520" height="340"></canvas>
+  </div>
+
+  <h2>How it works (full spec — only the key is secret)</h2>
+  <div class="card">
+    <p>State: 32 bytes <code>S[0..31]</code> on a ring (the vine). Movers: growth pointer
+    <code>p</code>, cycloid phase <code>θ</code>. <code>GOLD = 157</code> (odd, coprime to 256;
+    ≈0.613 turn, the golden-ratio conjugate).</p>
+    <pre>per output byte:
+  θ = (θ + 157) mod 256            # the wheel rolls
+  p = (p + 1 + (θ &gt;&gt; 6)) mod 32     # tendril creeps forward, stride 1..4
+  b = S[(p + 7)  mod 32]           # reach to older growth
+  c = S[(p + 19) mod 32]
+  r = 1 + (θ &amp; 7)                  # twist amount 1..8
+  m = rotl8((S[p] + b) mod 256, r) XOR c XOR θ
+  S[p] = m                         # grow the node
+  out  = m XOR S[m mod 32]         # nonlinear tap
+
+encrypt = plaintext XOR keystream   (decrypt is identical)
+init: S[i] = (i*157 + key[i%|k|] + nonce[i%|n|]) mod 256, then 64 warmup steps</pre>
+    <p class="sub">It's an ARX (add-rotate-xor) cipher — the ChaCha/BLAKE toolkit — but the
+    engine is original: an ARX <i>ring-walk</i> with a golden-angle pointer and cycloid-driven
+    rotations. Not RC4 (swap-based), not ChaCha (fixed matrix).</p>
+  </div>
+
+  <h2>Test vectors (self-checking)</h2>
+  <div class="card">
+    <table id="vectors"><thead><tr><th>key</th><th>nonce</th><th>keystream (hex)</th><th>match</th></tr></thead><tbody></tbody></table>
+    <p class="sub" id="vsum"></p>
+  </div>
+
+  <h2>🏆 The challenge — break it</h2>
+  <div class="card">
+    <p>Everything below is public. Only the <b>key</b> is secret. Recover the key (or the full
+    plaintext). It's a short <b>known-plaintext</b> attack: the first 18 bytes are given, so you
+    get 18 bytes of keystream for free — can you recover the key, or predict the rest?</p>
+    <table>
+      <tr><th>nonce (hex)</th><td class="mono">626c6f6f6d2d3031</td></tr>
+      <tr><th>ciphertext (hex)</th><td class="mono">0aaf6eab8a7dabd30eb0b5e2fb2d8d972b356b6f77be05f20220719d4df38250c495d63e15d7b8223ad14e1daa03b8cdb9ba0db7ec5b46b85857b71a180676960949a50d189d55c9334bc82e</td></tr>
+      <tr><th>known crib</th><td class="mono">"Dear breaker, the " (first 18 bytes of plaintext)</td></tr>
+      <tr><th>commitment</th><td class="mono">sha256(plaintext) = 7eab3da68b74e44411b4382e9ee20f8c244cf60ce3970dc17dd81609f44c43fb</td></tr>
+    </table>
+    <p class="sub">Verify a solution: if <code>sha256(your_plaintext)</code> equals the commitment,
+    you've got it. Open an issue on the repo with your method.</p>
+  </div>
+
+  <h2>Where to attack (hints)</h2>
+  <div class="card">
+    <ul>
+      <li><b>Keystream bias.</b> Generate megabytes of keystream and look for byte-value or
+      positional biases (this is how RC4 — and WEP — fell).</li>
+      <li><b>Tiny state.</b> 32 bytes + two pointers. Is the effective state really that small?
+      Short cycles? Internal collisions?</li>
+      <li><b>Arbitrary constants.</b> The offsets 7 and 19, state size 32, rotation scheme — chosen,
+      not justified. Weak diffusion is likely.</li>
+      <li><b>Key schedule.</b> The init is simple and linear-ish before warmup. Related keys /
+      related nonces may correlate.</li>
+      <li><b>Known-plaintext.</b> The challenge hands you 18 keystream bytes. Does that constrain
+      the key enough to search?</li>
+    </ul>
+  </div>
+
+  <footer>
+    <p><b>TENDRIL-1</b> is a toy for learning cryptanalysis. If it breaks, that's the lesson; if it
+    survives a while, that only means no one has broken it <i>yet</i> — which is not the same as
+    secure. Real, quantum-safe encryption: <b>ML-KEM (Kyber) + AES-256-GCM</b>.</p>
+    <p>Reference implementation, spec, and test vectors in the repo.</p>
+  </footer>
+</div>
+
+<script>
+const GOLD=157,N=32,MASK=N-1,WARMUP=64;
+const rotl8=(x,r)=>{x&=0xff;return ((x<<r)|(x>>(8-r)))&0xff;};
+function init(key,nonce){const S=new Array(N);
+  for(let i=0;i<N;i++)S[i]=(i*GOLD+key[i%key.length]+nonce[i%nonce.length])&0xff;
+  const st={S,p:0,theta:0};for(let w=0;w<WARMUP;w++)step(st);return st;}
+function step(st){st.theta=(st.theta+GOLD)&0xff;st.p=(st.p+1+(st.theta>>6))&MASK;
+  const b=st.S[(st.p+7)&MASK],c=st.S[(st.p+19)&MASK];const r=1+(st.theta&7);
+  const m=(rotl8((st.S[st.p]+b)&0xff,r)^c^st.theta)&0xff;st.S[st.p]=m;return m^st.S[m&MASK];}
+function keystream(key,nonce,n){const st=init(key,nonce);const o=new Uint8Array(n);
+  for(let i=0;i<n;i++)o[i]=step(st);return o;}
+function crypt(key,nonce,data){const ks=keystream(key,nonce,data.length);
+  const o=new Uint8Array(data.length);for(let i=0;i<data.length;i++)o[i]=data[i]^ks[i];return o;}
+const te=new TextEncoder(),td=new TextDecoder();
+const enc=s=>te.encode(s);
+const toHex=a=>[...a].map(b=>b.toString(16).padStart(2,'0')).join('');
+const fromHex=h=>{h=h.replace(/[^0-9a-f]/gi,'');const a=new Uint8Array(h.length/2);
+  for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;};
+
+let lastKs=null;
+function doEnc(){
+  const k=enc(key.value||" "),n=enc(nonce.value||" "),m=enc(msg.value);
+  const ct=crypt(k,n,m);document.getElementById('ct').textContent=toHex(ct);
+  document.getElementById('pt').textContent="";
+  lastKs=keystream(k,n,Math.max(m.length,160));drawLotus(lastKs);
+}
+function doDec(){
+  const k=enc(key.value||" "),n=enc(nonce.value||" ");
+  const ct=fromHex(document.getElementById('ct').textContent);
+  const pt=crypt(k,n,ct);
+  try{document.getElementById('pt').textContent=td.decode(pt);}
+  catch(e){document.getElementById('pt').textContent="(non-text bytes)";}
+}
+function drawLotus(ks){
+  const c=document.getElementById('lotus'),x=c.getContext('2d');
+  const W=c.width,H=c.height,cx=W/2,cy=H/2;x.clearRect(0,0,W,H);
+  const n=Math.min(ks.length,160),ga=Math.PI*(3-Math.sqrt(5));
+  for(let i=0;i<n;i++){const a=i*ga,rad=Math.sqrt(i)*13.5;
+    const px=cx+rad*Math.cos(a),py=cy+rad*Math.sin(a);
+    const hue=(ks[i]/255)*300, sz=3+ (ks[i]&7)*0.7;
+    x.beginPath();x.arc(px,py,sz,0,7);x.fillStyle=`hsl(${hue} 70% 58%)`;x.fill();}
+}
+// test vectors
+const V=[["k","n",16,"78ec4c66679827a7733bc86c487ef1cb"],
+  ["tendril","vine",16,"1c2e2fb518da4e1851f5eea8c71a3aee"],
+  ["TENDRIL-1","cycloid1",24,"e6ae762c19f5a1940ed6303e479edf39c30350fadf436f26"]];
+(function(){const tb=document.querySelector('#vectors tbody');let all=true;
+  for(const[k,n,l,exp]of V){const got=toHex(keystream(enc(k),enc(n),l));const ok=got===exp;all=all&&ok;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class=mono>${k}</td><td class=mono>${n}</td><td class=mono>${got}</td>`+
+      `<td class="${ok?'ok':'bad'}">${ok?'✓':'✗'}</td>`;tb.appendChild(tr);}
+  document.getElementById('vsum').textContent=all?
+    "All vectors reproduce in your browser ✓ — the JS matches the Python reference.":
+    "Mismatch ✗";})();
+doEnc();
+</script>
+</body>
+</html>
